@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 4566
+  portNum = 9998
   
   type ClientName = String
   type RoomName = String
@@ -157,12 +157,12 @@ module Main where
             Error head message -> output $ "->" ++ head ++ "<-\n" ++ message
             Command message arg -> case message of
                   [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",name]] -> do
-                        joinChatRoom client serv arg 
                         putStrLn "client joined chatroom\n"
+                        joinChatRoom client serv arg 
                         return True
                   [["JOIN_ID:",id],["CLIENT_NAME:",name]] -> do
-                        leaveChatroom client serv (read arg :: Int)
                         putStrLn "leave chatroom\n"
+                        leaveChatroom client serv (read arg :: Int)
                         return True 
                   [["PORT:",_],["CLIENT_NAME:",name]] -> do
                         putStrLn "dissconnect\n"
