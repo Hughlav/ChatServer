@@ -1,3 +1,4 @@
+
 {-# LANGUAGE LambdaCase,RecordWildCards, OverloadedStrings #-} 
 module Main where
   
@@ -74,7 +75,9 @@ module Main where
   type ClientName = String
   type RoomName = String
 
-
+  killSERV :: String
+  killSERV = "KILL"
+  
 --check
   --type ErrorHeading = String
   --type ErrorBody = String
@@ -110,7 +113,7 @@ module Main where
   main = withSocketsDo $ do
       server <- newServer
       printf "waiting for connction"
-      sock <- listenOn (PortNumber (fromIntegral 4422))
+      sock <- listenOn (PortNumber (fromIntegral 442233))
       
       forever $ do 
             (handle, host, port) <- accept sock
@@ -161,7 +164,7 @@ module Main where
                         tellRoom (read arg :: Int) $ Broadcast ("CHAT: " ++ arg) ("CLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n\n")
                         return True
                   [["KILL"]] -> do
-                        if arg == "KILL" then return False
+                        if arg == killSERV then return False
                         else return True
                   _ -> do
                         atomically   $ sendMsg client $ Error "Error " "Unrecognised args"
@@ -178,17 +181,20 @@ module Main where
   
   handleClient :: Handle -> Server -> IO()
   handleClient handle server = do
+      printf "handling client"
       hSetNewlineMode handle universalNewlineMode
       hSetBuffering handle NoBuffering
+      putStrLn ">Server Ready..." 
       readNxt
       return()
       where
-            readNxt = do 
+            readNxt = do --stck here i think check newlines etc
                   nxt <- hGetLine handle
                   case words nxt of --split what is in message nxt into list of words
-                        ["Helo", _] -> do
-                              hPutStrLn handle $ "Helo text\nIP: 0\nPort: 4422\nStudentID: 14313812"
+			["Helo", _] -> do
+                              hPutStrLn handle $ "Helo text\nIP: 0\nPort: 442233\nStudentID: 14313812\n"
                               readNxt
+                        ["KILL_SERVICE"] -> hPutStrLn handle "see ya" >> return ()
                         ["JOIN_CHATROOM: ", roomName] -> do
                               arguments <- getArgs (2) -- get info from join message
                               case map words arguments of -- get details of join
@@ -207,6 +213,7 @@ module Main where
                               
   runClient :: Server -> Client -> IO()
   runClient serv client@Client{..} = do
+      printf "running client\n"
       race server recieve -- concurrently do server and recieve
       return ()
       where 
@@ -225,7 +232,8 @@ module Main where
                         ["CHAT:",roomID]-> do
                               restOfMsg <- getArgs (3)
                               sendToRoom restOfMsg roomID
-
+			["KILL_SERVICE"] -> do
+			      sendToRoom [killSERV] killSERV
                         where 
                               getArgs n = replicateM n $ hGetLine clientHandle
                               sendToRoom msg roomID = atomically $ sendMsg client $ Command (map words msg) roomID
