@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 6666
+  portNum = 8666
   
   type ClientName = String
   type RoomName = String
@@ -246,6 +246,7 @@ module Main where
                               sendToRoom restOfMsg roomID
                         ["KILL_SERVICE"] -> do
                               sendToRoom [killSERV] killSERV
+                              return()
                         where 
                               getArgs n = replicateM n $ hGetLine clientHandle
                               sendToRoom msg roomID = atomically $ sendMsg client $ Command (map words msg) roomID
@@ -292,7 +293,7 @@ module Main where
                   writeTVar (clients a) addClientList
                   send (roomID a)
             where
-                  send ref = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++clientName++"\nSERVER_IP: 0.0.0.0\nPORT: "++show (fromIntegral portNum) ++ "\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID))
+                  send ref = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++roomName++"\nSERVER_IP: 0.0.0.0\nPORT: "++show (fromIntegral portNum) ++ "\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID))
 
 
   leaveChatroom :: Client -> Server -> Int -> IO()
