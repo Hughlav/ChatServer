@@ -157,25 +157,26 @@ module Main where
             Error head message -> output $ "->" ++ head ++ "<-\n" ++ message
             Command message arg -> case message of
                   [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",name]] -> do
-                        putStrLn "client joined chatroom\n"
+                        printf "client joined chatroom\n"
                         joinChatRoom client serv arg 
                         return True
                   [["JOIN_ID:",id],["CLIENT_NAME:",name]] -> do
-                        putStrLn "leave chatroom\n"
+                        printf "leave chatroom\n"
                         leaveChatroom client serv (read arg :: Int)
                         return True 
                   [["PORT:",_],["CLIENT_NAME:",name]] -> do
-                        putStrLn "dissconnect\n"
+                        printf "dissconnect\n"
                         return False
                   [["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msgToSend),[]] -> do
-                        putStrLn "send msg\n"
+                        printf "send msg\n"
                         tellRoom (read arg :: Int) $ Broadcast ("CHAT: " ++ arg) ("CLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n\n")
                         return True
                   [["KILL"]] -> do
-                        putStrLn "KILL\n"
+                        printf "KILL\n"
                         if arg == killSERV then return False
                         else return True
                   _ -> do
+                        printf "Error\n"
                         atomically   $ sendMsg client $ Error "Error " "Unrecognised args"
                         return True
                   where 
