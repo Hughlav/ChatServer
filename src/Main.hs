@@ -132,6 +132,7 @@ module Main where
   createClient :: ClientName -> Handle -> Int -> IO Client
   createClient name handle nameHash = do
       chan <- newTChanIO
+      printf "Creating Client\n"
       return Client { clientName = name
                     , clientChan = chan
                     , clientHandle = handle
@@ -198,6 +199,7 @@ module Main where
                               printf "Sending: Helo text\nIP: 0\nPort: portNum\nStudentID: 14313812\n"
                               readNxt
                     ["JOIN_CHATROOM: ", roomName] -> do
+                              printf "Joing Chatroom\n"
                               arguments <- getArgs (2) -- get info from join message
                               case map words arguments of -- get details of join
                                     [["CLIENT_IP: ",_],["PORT: ",_],["CLIENT_NAME: ",name]] -> do
@@ -207,7 +209,10 @@ module Main where
                                           hPutStrLn handle $ name++" entered " ++ roomName
                                           runClient server client `finally` (removeClient server client >> return ()) -- run until client removed from chat
                                     _ -> readNxt --if something else then get next message (for case of blank message)
-                    ["KILL_SERVICE"] -> hPutStrLn handle "see ya" >> return ()
+                    ["KILL_SERVICE"] -> do 
+                        printf "Killing client\n"
+                        hPutStrLn handle "see ya" >> return ()
+
                     _ -> readNxt
 
                   where
@@ -273,11 +278,13 @@ module Main where
       roomList <- readTVar serverRooms
       case M.lookup (hash roomName) roomList of --check if that chatroom exists
             Nothing -> do
+                  printf "Creating a chatroom\n"
                   room <- newChatroom clientJoining roomName
                   let addRoomList = M.insert (roomID room) room roomList
                   writeTVar serverRooms addRoomList --add new chatroom to list of chatrooms
                   send (roomID room)
             Just a -> do
+                  printf "Joining chatroom\n"
                   clientList <- readTVar (clients a)
                   let addClientList = M.insert clientID clientJoining clientList
                   writeTVar (clients a) addClientList
