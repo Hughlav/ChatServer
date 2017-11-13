@@ -253,11 +253,13 @@ module Main where
                               sendToRoom [killSERV] killSERV
                               return()
                         _ -> do
-                              printf "getting nxt in runClient\n"
-                              recieve
+                              printf "error run client\n"
+                              sendErrorToRoom 
+                              
                         where 
                               getArgs n = replicateM n $ hGetLine clientHandle
                               sendToRoom msg roomID = atomically $ sendMsg client $ Command (map words msg) roomID
+                              sendErrorToRoom  = atomically $ sendMsg client $ Error "Error 1" "No info in message"
   
             server = join $ atomically $ do 
                   msg <- readTChan clientChan
