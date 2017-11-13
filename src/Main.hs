@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 42422
+  portNum = 44242
   
   type ClientName = String
   type RoomName = String
@@ -264,7 +264,7 @@ module Main where
             leave room = do 
                   leaveChatroom client serv (hash room) >> putStrLn (clientName ++ " removed from " ++ room)
 
-  newChatroom :: Client -> String ->STM Room
+  newChatroom :: Client -> String -> STM Room
   newChatroom joiningClient@Client{..} room = do
       clientList <- newTVar $ M.insert clientID joiningClient M.empty
       return Room { roomName = room
@@ -278,13 +278,11 @@ module Main where
       roomList <- readTVar serverRooms
       case M.lookup (hash roomName) roomList of --check if that chatroom exists
             Nothing -> do
-                  printf "Creating a chatroom\n"
                   room <- newChatroom clientJoining roomName
                   let addRoomList = M.insert (roomID room) room roomList
                   writeTVar serverRooms addRoomList --add new chatroom to list of chatrooms
                   send (roomID room)
             Just a -> do
-                  printf "Joining chatroom\n"
                   clientList <- readTVar (clients a)
                   let addClientList = M.insert clientID clientJoining clientList
                   writeTVar (clients a) addClientList
