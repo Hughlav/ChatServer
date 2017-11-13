@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 4466
+  portNum = 4566
   
   type ClientName = String
   type RoomName = String
@@ -264,6 +264,7 @@ module Main where
             server = join $ atomically $ do 
                   msg <- readTChan clientChan
                   return $ do 
+                        printf "handeling message\n"
                         continue <- handleMsg serv client msg
                         when continue $ server
 
