@@ -155,7 +155,7 @@ module Main where
             Tell message -> output message
             Broadcast head message -> output $ head ++ "\n" ++ message
             Error head message -> output $ "->" ++ head ++ "<-\n" ++ message
-            Command message arg -> case message of
+            Command message arg -> case words message of
                   [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",name]] -> do
                         printf "client joined chatroom\n"
                         joinChatRoom client serv arg 
@@ -271,9 +271,9 @@ module Main where
                   msg <- readTChan clientChan
                   return $ do  --- currently a mess, trying to figure out what passes to handleMsg
                         printf "handeling message\n"
-                        putStrLn $ "msg is: "
-                        let arg = hGetLine msg
-                        putStrLn $ show arg ++ "\n"
+                        --putStrLn $ "msg is: "
+                        --let arg = hGetLine msg
+                        --putStrLn $ show arg ++ "\n"
                         continue <- handleMsg serv client msg
                         when continue $ server
 
