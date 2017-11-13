@@ -233,18 +233,23 @@ module Main where
                   nxt <- hGetLine clientHandle
                   case words nxt of
                         ["JOIN_CHATROOM:",roomName] -> do
+                              printf "running client joining chat\n"
                               restOfMsg <- getArgs (3)
                               sendToRoom restOfMsg roomName
                         ["LEAVE_CHATROOM:",roomID] -> do
+                              printf "running client leaving chat\n"
                               restOfMsg <- getArgs (2)
                               sendToRoom restOfMsg roomID
                         ["DISCONNECT:",ip] -> do
+                              printf "running client disconnect\n"
                               restOfMsg <- getArgs (2)
                               sendToRoom restOfMsg ip
                         ["CHAT:",roomID]-> do
+                              printf "running client chat\n"
                               restOfMsg <- getArgs (3)
                               sendToRoom restOfMsg roomID
                         ["KILL_SERVICE"] -> do
+                              printf "running client kill service\n"
                               sendToRoom [killSERV] killSERV
                               return()
                         _ -> do
