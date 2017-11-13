@@ -150,7 +150,7 @@ module Main where
   
   handleMsg :: Server -> Client -> Message -> IO Bool
   handleMsg serv client@Client{..} msg = 
-      case msg of 
+      case msg of --------------- STUCK IN HANDLEMSG
             Notice message -> output $ "*** " ++ message
             Tell message -> output message
             Broadcast head message -> output $ head ++ "\n" ++ message
@@ -271,6 +271,7 @@ module Main where
                   msg <- readTChan clientChan
                   return $ do 
                         printf "handeling message\n"
+                        putStrLn $ "msg is: " ++ show msg ++ "\n"
                         continue <- handleMsg serv client msg
                         when continue $ server
 
