@@ -203,6 +203,7 @@ module Main where
                               arguments <- getArgs (2) -- get info from join message
                               case map words arguments of -- get details of join
                                     [["CLIENT_IP: ",_],["PORT: ",_],["CLIENT_NAME: ",name]] -> do
+                                          printf "joining chatroom\n"
                                           client <- createClient name handle (hash name) -- name may not be unique so use hash for client ID
                                           joinChatRoom client server roomName
                                           hPutStrLn handle $ "***Welcome, "++name++"***" --need to format and maybe send to whole channel
@@ -213,7 +214,9 @@ module Main where
                         printf "Killing client\n"
                         hPutStrLn handle "see ya" >> return ()
 
-                    _ -> readNxt
+                    _ -> do
+                        putStrLn $ "words are: " ++ show nxt ++ "\n"
+                        readNxt
 
                   where
                         getArgs n = replicateM n (hGetLine handle)
