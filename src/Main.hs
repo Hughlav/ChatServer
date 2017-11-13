@@ -72,8 +72,8 @@ module Main where
   
   -}
 
-  portNum :: int 
-  portNum = 442442
+  portNum :: Int 
+  portNum = 42422
   
   type ClientName = String
   type RoomName = String
@@ -116,7 +116,7 @@ module Main where
   main = withSocketsDo $ do
       server <- newServer
       printf "waiting for connction"
-      sock <- listenOn (PortNumber (fromIntegral port))
+      sock <- listenOn (PortNumber (fromIntegral portNum))
       
       forever $ do 
             (handle, host, port) <- accept sock
@@ -184,22 +184,20 @@ module Main where
   
   handleClient :: Handle -> Server -> IO()
   handleClient handle server = do
-      printf "handling client"
+      printf "handling client\n"
       hSetNewlineMode handle universalNewlineMode
       hSetBuffering handle NoBuffering
-      putStrLn ">Server Ready..." 
       readNxt
-      return()
+      return ()
       where
             readNxt = do --stck here i think check newlines etc
                   nxt <- hGetLine handle
                   case words nxt of --split what is in message nxt into list of words
-			["Helo", _] -> do
-                              hPutStrLn handle $ "Helo text\nIP: 0\nPort: " ++ (show port) ++ "\nStudentID: 14313812\n"
+                    ["HELO", _] -> do
+                              hPutStrLn handle $ "Helo text\nIP: 0\nPort: " ++ (show portNum) ++ "\nStudentID: 14313812\n"
                               printf "Sending: Helo text\nIP: 0\nPort: portNum\nStudentID: 14313812\n"
                               readNxt
-                  ["KILL_SERVICE"] -> hPutStrLn handle "see ya" >> return ()
-                  ["JOIN_CHATROOM: ", roomName] -> do
+                    ["JOIN_CHATROOM: ", roomName] -> do
                               arguments <- getArgs (2) -- get info from join message
                               case map words arguments of -- get details of join
                                     [["CLIENT_IP: ",_],["PORT: ",_],["CLIENT_NAME: ",name]] -> do
@@ -209,10 +207,11 @@ module Main where
                                           hPutStrLn handle $ name++" entered " ++ roomName
                                           runClient server client `finally` (removeClient server client >> return ()) -- run until client removed from chat
                                     _ -> readNxt --if something else then get next message (for case of blank message)
-                  _ -> readNxt
+                    ["KILL_SERVICE"] -> hPutStrLn handle "see ya" >> return ()
+                    _ -> readNxt
 
                   where
-                         getArgs n = replicateM n (hGetLine handle)
+                        getArgs n = replicateM n (hGetLine handle)
 
                               
   runClient :: Server -> Client -> IO()
@@ -236,8 +235,8 @@ module Main where
                         ["CHAT:",roomID]-> do
                               restOfMsg <- getArgs (3)
                               sendToRoom restOfMsg roomID
-			["KILL_SERVICE"] -> do
-			      sendToRoom [killSERV] killSERV
+                        ["KILL_SERVICE"] -> do
+                              sendToRoom [killSERV] killSERV
                         where 
                               getArgs n = replicateM n $ hGetLine clientHandle
                               sendToRoom msg roomID = atomically $ sendMsg client $ Command (map words msg) roomID
@@ -283,7 +282,7 @@ module Main where
                   let addClientList = M.insert clientID clientJoining clientList
                   writeTVar (clients a) addClientList
             where
-                  send ref = sendMsg joiner (Response $ "JOINED_CHATROOM: "++clientName++"\nSERVER_IP: 0.0.0.0\nPORT: "++show (fromIntegral port) ++ "\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID))
+                  send ref = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++clientName++"\nSERVER_IP: 0.0.0.0\nPORT: "++show (fromIntegral portNum) ++ "\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID))
 
 
   leaveChatroom :: Client -> Server -> Int -> IO()
