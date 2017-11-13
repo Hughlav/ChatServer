@@ -158,16 +158,21 @@ module Main where
             Command message arg -> case message of
                   [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",name]] -> do
                         joinChatRoom client serv arg 
-                        putStrLn "client joined chatroom"
+                        putStrLn "client joined chatroom\n"
                         return True
                   [["JOIN_ID:",id],["CLIENT_NAME:",name]] -> do
                         leaveChatroom client serv (read arg :: Int)
+                        putStrLn "leave chatroom\n"
                         return True 
-                  [["PORT:",_],["CLIENT_NAME:",name]] -> return False
+                  [["PORT:",_],["CLIENT_NAME:",name]] -> do
+                        putStrLn "dissconnect\n"
+                        return False
                   [["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msgToSend),[]] -> do
+                        putStrLn "send msg\n"
                         tellRoom (read arg :: Int) $ Broadcast ("CHAT: " ++ arg) ("CLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n\n")
                         return True
                   [["KILL"]] -> do
+                        putStrLn "KILL\n"
                         if arg == killSERV then return False
                         else return True
                   _ -> do
