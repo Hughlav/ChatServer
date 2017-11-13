@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 44242
+  portNum = 6666
   
   type ClientName = String
   type RoomName = String
@@ -198,11 +198,11 @@ module Main where
                               hPutStrLn handle $ "Helo text\nIP: 0\nPort: " ++ (show portNum) ++ "\nStudentID: 14313812\n"
                               printf "Sending: Helo text\nIP: 0\nPort: portNum\nStudentID: 14313812\n"
                               readNxt
-                    ["JOIN_CHATROOM: ", roomName] -> do
+                    ["JOIN_CHATROOM:", roomName] -> do
                               printf "Joing Chatroom\n"
-                              arguments <- getArgs (2) -- get info from join message
+                              arguments <- getArgs (3) -- get info from join message
                               case map words arguments of -- get details of join
-                                    [["CLIENT_IP: ",_],["PORT: ",_],["CLIENT_NAME: ",name]] -> do
+                                    [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",name]] -> do
                                           printf "joining chatroom\n"
                                           client <- createClient name handle (hash name) -- name may not be unique so use hash for client ID
                                           joinChatRoom client server roomName
