@@ -269,9 +269,11 @@ module Main where
   
             server = join $ atomically $ do 
                   msg <- readTChan clientChan
-                  return $ do 
+                  return $ do  --- currently a mess, trying to figure out what passes to handleMsg
                         printf "handeling message\n"
-                        putStrLn $ "msg is: " ++ show msg ++ "\n"
+                        putStrLn $ "msg is: "
+                        let arg = hGetLine msg
+                        putStrLn $ show arg ++ "\n"
                         continue <- handleMsg serv client msg
                         when continue $ server
 
