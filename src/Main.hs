@@ -195,7 +195,7 @@ module Main where
                   nxt <- hGetLine handle
                   case words nxt of --split what is in message nxt into list of words
                     ["HELO", _] -> do
-                              hPutStrLn handle $ "Helo text\nIP: 0\nPort: " ++ (show portNum) ++ "\nStudentID: 14313812\n"
+                              sendHandle $ "Helo text\nIP: 0\nPort: " ++ (show portNum) ++ "\nStudentID: 14313812\n"
                               printf "Sending: Helo text\nIP: 0\nPort: portNum\nStudentID: 14313812\n"
                               readNxt
                     ["JOIN_CHATROOM:", roomName] -> do
@@ -206,8 +206,8 @@ module Main where
                                           printf "joining chatroom\n"
                                           client <- createClient name handle (hash name) -- name may not be unique so use hash for client ID
                                           joinChatRoom client server roomName
-                                          hPutStrLn handle $ "***Welcome, "++name++"***" --need to format and maybe send to whole channel
-                                          hPutStrLn handle $ name++" entered " ++ roomName
+                                          --hPutStrLn handle $ "***Welcome, "++name++"***" --need to format and maybe send to whole channel
+                                          --hPutStrLn handle $ name++" entered " ++ roomName
                                           runClient server client `finally` (removeClient server client >> return ()) -- run until client removed from chat
                                     _ -> readNxt --if something else then get next message (for case of blank message)
                     ["KILL_SERVICE"] -> do 
@@ -220,6 +220,7 @@ module Main where
 
                   where
                         getArgs n = replicateM n (hGetLine handle)
+                        sendHandle = hPutStrLn handle
 
                               
   runClient :: Server -> Client -> IO()
@@ -289,6 +290,7 @@ module Main where
                   clientList <- readTVar (clients a)
                   let addClientList = M.insert clientID clientJoining clientList
                   writeTVar (clients a) addClientList
+                  send (roomID room)
             where
                   send ref = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++clientName++"\nSERVER_IP: 0.0.0.0\nPORT: "++show (fromIntegral portNum) ++ "\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID))
 
