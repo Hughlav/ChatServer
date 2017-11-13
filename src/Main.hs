@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 8666
+  portNum = 9666
   
   type ClientName = String
   type RoomName = String
@@ -247,6 +247,9 @@ module Main where
                         ["KILL_SERVICE"] -> do
                               sendToRoom [killSERV] killSERV
                               return()
+                        _ -> do
+                              printf "getting nxt in runClient\n"
+                              recieve
                         where 
                               getArgs n = replicateM n $ hGetLine clientHandle
                               sendToRoom msg roomID = atomically $ sendMsg client $ Command (map words msg) roomID
