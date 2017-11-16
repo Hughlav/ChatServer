@@ -314,7 +314,7 @@ module Main where
                   writeTVar (clients a) addClientList
                   send (roomID a)
             where
-                  send ref = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++roomName++"\nSERVER_IP: 0.0.0.0\nPORT: "++show (fromIntegral portNum) ++ "\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID))
+                  send ref = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++roomName++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID)) --no port as udp
 
 
   leaveChatroom :: Client -> Server -> Int -> IO()
