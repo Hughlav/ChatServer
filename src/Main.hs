@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 4888
+  portNum = 3888
   
   type ClientName = String
   type RoomName = String
