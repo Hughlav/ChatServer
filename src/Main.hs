@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 6888
+  portNum = 5888
   
   type ClientName = String
   type RoomName = String
@@ -174,7 +174,7 @@ module Main where
                         return False
                   [["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msgToSend),[]] -> do
                         putStrLn "send msg\n"
-                        tellRoom (read arg :: Int) $ Broadcast ("CHAT: " ++ arg ++ "\nCLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n\n")
+                        tellRoom (read arg :: Int) $ Broadcast ("CHAT:" ++ arg ++ "\nCLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n\n")
                         return True
                   [["KILL"]] -> do
                         putStrLn "KILL\n"
