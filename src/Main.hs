@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 1888
+  portNum = 1998
   
   type ClientName = String
   type RoomName = String
@@ -174,7 +174,7 @@ module Main where
                         return False
                   [["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msgToSend),[]] -> do
                         putStrLn "send msg\n"
-                        tellRoom (read arg :: Int) $ Tell ("CHAT:" ++ arg ++ "\nCLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n\n")
+                        tellRoom (read arg :: Int) $ Tell ("CHAT:" ++ arg ++ "\nCLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n") --one or 2 \n?
                         return True
                   [["KILL"]] -> do
                         putStrLn "KILL\n"
@@ -311,7 +311,7 @@ module Main where
                   writeTVar (clients a) addClientList
                   send (roomID a)
             where
-                  send ref = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++roomName++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID)) --no port as udp
+                  send ref = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++roomName++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID) ++ "\n") --no port as udp
 
 
   leaveChatroom :: Client -> Server -> Int -> IO()
