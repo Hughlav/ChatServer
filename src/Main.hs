@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 5888
+  portNum = 4888
   
   type ClientName = String
   type RoomName = String
@@ -161,7 +161,7 @@ module Main where
                         putStrLn "client joined chatroom\n"
                         joinChatRoom client serv arg 
                         let joinmsg = "CHAT:" ++(show (hash arg))++"\nCLIENT_NAME:" ++ clientName ++ "\n has joined the chatroom.\n"
-                        tellRoom (read arg :: Int) (Broadcast joinmsg)
+                        tellRoom (read arg :: Int) (Tell joinmsg) --tell/broadcast
                         putStrLn "Room notified. returning True.\n"
                         return True
                   [["JOIN_ID:",id],["CLIENT_NAME:",name]] -> do
@@ -174,7 +174,7 @@ module Main where
                         return False
                   [["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msgToSend),[]] -> do
                         putStrLn "send msg\n"
-                        tellRoom (read arg :: Int) $ Broadcast ("CHAT:" ++ arg ++ "\nCLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n\n")
+                        tellRoom (read arg :: Int) $ Tell ("CHAT:" ++ arg ++ "\nCLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n\n")
                         return True
                   [["KILL"]] -> do
                         putStrLn "KILL\n"
@@ -216,8 +216,6 @@ module Main where
                                           printf "joining chatroom\n"
                                           client <- createClient name handle (hash name) -- name may not be unique so use hash for client ID
                                           joinChatRoom client server roomName
-                                          --hPutStrLn handle $ "***Welcome, "++name++"***" --need to format and maybe send to whole channel
-                                          --hPutStrLn handle $ name++" entered " ++ roomName
                                           runClient server client `finally` (removeClient server client >> return ()) -- run until client removed from chat
                                     _ -> readNxt --if something else then get next message (for case of blank message)
                     ["KILL_SERVICE"] -> do 
@@ -229,8 +227,9 @@ module Main where
                         readNxt
 
                   where
-                        getArgs n = replicateM n (hGetLine handle)
                         sendHandle = hPutStrLn handle
+                        getArgs n = replicateM n (hGetLine handle)
+                        
 
                               
   runClient :: Server -> Client -> IO()
