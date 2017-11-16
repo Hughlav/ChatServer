@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 8888
+  portNum = 7888
   
   type ClientName = String
   type RoomName = String
@@ -152,31 +152,32 @@ module Main where
   handleMsg :: Server -> Client -> Message -> IO Bool
   handleMsg serv client@Client{..} msg = 
       case msg of --------------- STUCK IN HANDLEMSG
-            Notice message -> output  message
+            Notice message -> output message
             Tell message -> output message
-            Broadcast message -> output  message
+            Broadcast message -> output message
             Error head message -> output $ "->" ++ head ++ "<-\n" ++ message
             Command message arg -> case message of
                   [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",name]] -> do
-                        printf "client joined chatroom\n"
+                        putStrLn "client joined chatroom\n"
                         joinChatRoom client serv arg 
                         let joinmsg = "Chat:" ++(show (hash arg))++"\nCLIENT_NAME:" ++ clientName ++ "\n has joined the chatroom.\n"
                         tellRoom (read arg :: Int) (Broadcast joinmsg)
+                        putStrLn "Room notified. returning True.\n"
                         return True
                   [["JOIN_ID:",id],["CLIENT_NAME:",name]] -> do
-                        printf "leave chatroom\n"
+                        putStrLn "leave chatroom\n"
                         leaveChatroom client serv (read arg :: Int)
                         return True 
                   [["PORT:",_],["CLIENT_NAME:",name]] -> do
-                        printf "dissconnect\n"
+                        putStrLn "dissconnect\n"
                         removeClient serv client
                         return False
                   [["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msgToSend),[]] -> do
-                        printf "send msg\n"
+                        putStrLn "send msg\n"
                         tellRoom (read arg :: Int) $ Broadcast ("CHAT: " ++ arg ++ "\nCLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n")
                         return True
                   [["KILL"]] -> do
-                        printf "KILL\n"
+                        putStrLn "KILL\n"
                         if arg == killSERV then return False
                         else return True
                   _ -> do
@@ -314,7 +315,7 @@ module Main where
                   writeTVar (clients a) addClientList
                   send (roomID a)
             where
-                  send ref = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++roomName++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID)) --no port as udp
+                  send ref = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++roomName++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID)++ "\n") --no port as udp
 
 
   leaveChatroom :: Client -> Server -> Int -> IO()
