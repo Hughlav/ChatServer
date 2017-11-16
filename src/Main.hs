@@ -19,6 +19,7 @@ module Main where
   import Network
   import Network (PortID(..), accept, listenOn, withSocketsDo)
   import qualified Data.Set as S
+  import qualified Data.ByteString.Char8 as BS
   import Data.Hashable
 
 
@@ -91,6 +92,7 @@ module Main where
       | Broadcast String String -- ClientName
       | Command [[String]] String --CmdArgs
       | Error String String -- ErrorHeading
+      deriving Show
 
 
 
@@ -107,7 +109,7 @@ module Main where
       , clients :: TVar (Map Int Client) -- Store list of clients in room
   }
   
-  type Msg = (Int, String)
+  --type Msg = (Int, String)
   type RoomList = TVar (Map Int Room) -- Store list of rooms
   type Server = TVar (Map Int Room)
 
@@ -155,7 +157,7 @@ module Main where
             Tell message -> output message
             Broadcast head message -> output $ head ++ "\n" ++ message
             Error head message -> output $ "->" ++ head ++ "<-\n" ++ message
-            Command message arg -> case words message of
+            Command message arg -> case message of
                   [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",name]] -> do
                         printf "client joined chatroom\n"
                         joinChatRoom client serv arg 
@@ -276,8 +278,6 @@ module Main where
                         --putStrLn $ show arg ++ "\n"
                         continue <- handleMsg serv client msg
                         when continue $ server
-
--- handleMsg ::
 
 
   removeClient :: Server -> Client -> IO() 
