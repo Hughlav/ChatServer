@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 1978
+  portNum = 1778
   
   type ClientName = String
   type RoomName = String
@@ -206,8 +206,8 @@ module Main where
                   nxt <- hGetLine handle
                   case words nxt of --split what is in message nxt into list of words
                     ["HELO", "BASE_TEST"] -> do
-                              --sendHandle $ "HELO text\nIP: 0\nPort: " ++ (show portNum) ++ "\nStudentID: 14313812\n"
-                              sendHandle "TEST"
+                              sendHandle $ "HELO text\nIP: 0\nPort: " ++ (show portNum) ++ "\nStudentID: 14313812\n"
+                              --sendHandle "TEST"
                               printf "Sending: Helo text\nIP: 0\nPort: portNum\nStudentID: 14313812\n"
                               readNxt
                     ["JOIN_CHATROOM:", roomName] -> do
@@ -256,7 +256,7 @@ module Main where
                               sendToRoom restOfMsg ip
                         ["CHAT:",roomID]-> do
                               printf "running client chat\n"
-                              restOfMsg <- getArgs (3)
+                              restOfMsg <- getArgs (4)
                               sendToRoom restOfMsg roomID
                         ["KILL_SERVICE"] -> do
                               printf "running client kill service\n"
