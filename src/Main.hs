@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 7888
+  portNum = 6888
   
   type ClientName = String
   type RoomName = String
@@ -160,7 +160,7 @@ module Main where
                   [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",name]] -> do
                         putStrLn "client joined chatroom\n"
                         joinChatRoom client serv arg 
-                        let joinmsg = "Chat:" ++(show (hash arg))++"\nCLIENT_NAME:" ++ clientName ++ "\n has joined the chatroom.\n"
+                        let joinmsg = "CHAT:" ++(show (hash arg))++"\nCLIENT_NAME:" ++ clientName ++ "\n has joined the chatroom.\n"
                         tellRoom (read arg :: Int) (Broadcast joinmsg)
                         putStrLn "Room notified. returning True.\n"
                         return True
@@ -174,7 +174,7 @@ module Main where
                         return False
                   [["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msgToSend),[]] -> do
                         putStrLn "send msg\n"
-                        tellRoom (read arg :: Int) $ Broadcast ("CHAT: " ++ arg ++ "\nCLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n")
+                        tellRoom (read arg :: Int) $ Broadcast ("CHAT: " ++ arg ++ "\nCLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n\n")
                         return True
                   [["KILL"]] -> do
                         putStrLn "KILL\n"
