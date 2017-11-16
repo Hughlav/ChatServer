@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 1998
+  portNum = 1978
   
   type ClientName = String
   type RoomName = String
@@ -206,7 +206,8 @@ module Main where
                   nxt <- hGetLine handle
                   case words nxt of --split what is in message nxt into list of words
                     ["HELO", "BASE_TEST"] -> do
-                              sendHandle $ "HELO text\nIP: 0\nPort: " ++ (show portNum) ++ "\nStudentID: 14313812\n"
+                              --sendHandle $ "HELO text\nIP: 0\nPort: " ++ (show portNum) ++ "\nStudentID: 14313812\n"
+                              sendHandle "TEST"
                               printf "Sending: Helo text\nIP: 0\nPort: portNum\nStudentID: 14313812\n"
                               readNxt
                     ["JOIN_CHATROOM:", roomName] -> do
