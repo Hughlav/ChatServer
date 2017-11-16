@@ -205,7 +205,7 @@ module Main where
             readNxt = do --stck here i think check newlines etc
                   nxt <- hGetLine handle
                   case words nxt of --split what is in message nxt into list of words
-                    ["HELO", _] -> do
+                    ["HELO", "BASE_TEST"] -> do
                               sendHandle $ "Helo text\nIP: 0\nPort: " ++ (show portNum) ++ "\nStudentID: 14313812\n"
                               printf "Sending: Helo text\nIP: 0\nPort: portNum\nStudentID: 14313812\n"
                               readNxt
