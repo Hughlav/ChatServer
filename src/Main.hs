@@ -19,7 +19,6 @@ module Main where
   import Network
   import Network (PortID(..), accept, listenOn, withSocketsDo)
   import qualified Data.Set as S
-  import qualified Data.ByteString.Char8 as BS
   import Data.Hashable
 
 
@@ -74,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 9889
+  portNum = 9888
   
   type ClientName = String
   type RoomName = String
@@ -89,7 +88,7 @@ module Main where
 
   data Message = Notice String
       | Tell String -- ClientName
-      | Broadcast String String -- ClientName
+      | Broadcast String -- ClientName
       | Command [[String]] String --CmdArgs
       | Error String String -- ErrorHeading
       deriving Show
@@ -153,14 +152,16 @@ module Main where
   handleMsg :: Server -> Client -> Message -> IO Bool
   handleMsg serv client@Client{..} msg = 
       case msg of --------------- STUCK IN HANDLEMSG
-            Notice message -> output $ "*** " ++ message
+            Notice message -> output  message
             Tell message -> output message
-            Broadcast head message -> output $ head ++ "\n" ++ message
+            Broadcast message -> output  message
             Error head message -> output $ "->" ++ head ++ "<-\n" ++ message
             Command message arg -> case message of
                   [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",name]] -> do
                         printf "client joined chatroom\n"
                         joinChatRoom client serv arg 
+                        let joinmsg = "Chat:" ++(show (hash arg))++"\nCLIENT_NAME:" ++ clientName ++ "\n has joined the chatroom.\n"
+                        tellRoom (read arg :: Int) (Broadcast joinmsg)
                         return True
                   [["JOIN_ID:",id],["CLIENT_NAME:",name]] -> do
                         printf "leave chatroom\n"
@@ -168,10 +169,11 @@ module Main where
                         return True 
                   [["PORT:",_],["CLIENT_NAME:",name]] -> do
                         printf "dissconnect\n"
+                        removeClient serv client
                         return False
                   [["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msgToSend),[]] -> do
                         printf "send msg\n"
-                        tellRoom (read arg :: Int) $ Broadcast ("CHAT: " ++ arg) ("CLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n\n")
+                        tellRoom (read arg :: Int) $ Broadcast ("CHAT: " ++ arg ++ "\nCLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n")
                         return True
                   [["KILL"]] -> do
                         printf "KILL\n"
@@ -188,7 +190,7 @@ module Main where
                               case maybeRoom of
                                 Nothing    -> return True
                                 Just a -> sendMsgtoRoom msg a >> return True
-            where output s = do hPutStrLn clientHandle s; return True
+            where output s = do putStrLn (clientName ++ "msg = " ++ s) >> hPutStrLn clientHandle s; return True
 
   
   handleClient :: Handle -> Server -> IO()
@@ -207,7 +209,6 @@ module Main where
                               printf "Sending: Helo text\nIP: 0\nPort: portNum\nStudentID: 14313812\n"
                               readNxt
                     ["JOIN_CHATROOM:", roomName] -> do
-                              printf "Joing Chatroom\n"
                               arguments <- getArgs (3) -- get info from join message
                               case map words arguments of -- get details of join
                                     [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",name]] -> do
@@ -331,7 +332,7 @@ module Main where
                               let newClientList = M.delete (hash clientName) clientList
                               writeTVar (clients a) newClientList
                               sendMsg client (Tell $ "LEFT_CHATROOM: " ++ (show roomID) ++ "\nJOIN_ID: " ++ (show $ clientID + roomID) ++ "\n")
-                        leaveMsg = Broadcast "User Left" (clientName ++ " has left the building\n\n")
+                        leaveMsg = Broadcast $ "User Left\n" ++ clientName ++ " has left the building\n\n"
 
   deleteChatroom :: Server -> Int -> IO()
   deleteChatroom serv refID = atomically $ do
