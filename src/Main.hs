@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 2888
+  portNum = 1888
   
   type ClientName = String
   type RoomName = String
@@ -274,9 +274,6 @@ module Main where
                   msg <- readTChan clientChan
                   return $ do  --- currently a mess, trying to figure out what passes to handleMsg
                         printf "handeling message\n"
-                        --putStrLn $ "msg is: "
-                        --let arg = hGetLine msg
-                        --putStrLn $ show arg ++ "\n"
                         continue <- handleMsg serv client msg
                         when continue $ server
 
@@ -314,7 +311,7 @@ module Main where
                   writeTVar (clients a) addClientList
                   send (roomID a)
             where
-                  send ref = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++roomName++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID)++ "\n") --no port as udp
+                  send ref = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++roomName++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID)) --no port as udp
 
 
   leaveChatroom :: Client -> Server -> Int -> IO()
