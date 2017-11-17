@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 8564
+  portNum = 8560
   
   type ClientName = String
   type RoomName = String
@@ -347,7 +347,7 @@ module Main where
                               let newClientList = M.delete (hash clientName) clientList
                               writeTVar (clients a) newClientList
                               --sendMsg client (Tell $ "LEFT_CHATROOM: " ++ (show roomID) ++ "\nJOIN_ID: " ++ (show $ clientID + roomID) ++ "\n")
-                        leaveMsg = (Broadcast $ "CHAT:\n" ++ show roomID ++ "\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE:" ++ clientName ++" has left the building.\n")
+                        leaveMsg = (Broadcast $ "CHAT:" ++ show roomID ++ "\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE:" ++ clientName ++" has left the building.\n")
 
   deleteChatroom :: Server -> Int -> IO()
   deleteChatroom serv refID = atomically $ do
