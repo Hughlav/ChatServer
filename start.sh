@@ -1,2 +1,2 @@
 #!/bin/bash
-stack exec -- ChatServer $1
+stack exec -- Chatserver $1
