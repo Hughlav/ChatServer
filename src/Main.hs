@@ -5,6 +5,7 @@ module Main where
   
   import System.IO
   import Control.Exception
+  import System.Environment
   --import Control.Concurrent
   import Control.Monad (forever,replicateM,when,join)
   import Control.Monad.Fix (fix)
@@ -16,6 +17,7 @@ module Main where
   import Data.Map (Map)
   import qualified Data.Map as M
   import Data.Set (Set)
+  import Data.String
   import Network
   import Network (PortID(..), accept, listenOn, withSocketsDo)
   import qualified Data.Set as S
@@ -72,8 +74,8 @@ module Main where
   
   -}
 
-  portNum :: Int 
-  portNum = 2161
+  --portNum :: Int 
+  --portNum = 2161
   
   type ClientName = String
   type RoomName = String
@@ -115,14 +117,16 @@ module Main where
 
   main :: IO()
   main = withSocketsDo $ do
+      port <- getArgs
+      let portNum = read $ head port :: Int
       server <- newServer
-      printf "waiting for connction"
+      putStrLn "waiting for connction"
       sock <- listenOn (PortNumber (fromIntegral portNum))
       
       forever $ do 
             (handle, host, port) <- accept sock
             printf "Connection accepted: %s\n" host
-            forkFinally (handleClient handle server) (\_ -> hClose handle) --fork each client to its own thread
+            forkFinally (handleClient handle server portNum) (\_ -> hClose handle) --fork each client to its own thread
       
   
   newServer :: IO Server
@@ -169,8 +173,8 @@ module Main where
                         leaveChatroom client serv (read arg :: Int) (read id :: Int) --here
                         return True 
                   [["PORT:",_],["CLIENT_NAME:",name]] -> do
-                        --putStrLn "dissconnect\n"
-                        hPutStrLn clientHandle ("BYE")
+                        let leaveMsg = ("CHAT:" ++ show 0 ++ "\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE:" ++ clientName ++" has left the building.\n")
+                        output leaveMsg -- should be in form CHAT:: send to client
                         removeClient serv client
                         return False
                   [["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msgToSend),[]] -> do
@@ -195,8 +199,8 @@ module Main where
             where output s = do putStrLn (clientName ++ "msg = " ++ s) >> hPutStrLn clientHandle s; return True
 
   
-  handleClient :: Handle -> Server -> IO()
-  handleClient handle server = do
+  handleClient :: Handle -> Server -> Int -> IO()
+  handleClient handle server portNum = do
       printf "handling client\n"
       hSetNewlineMode handle universalNewlineMode
       hSetBuffering handle NoBuffering
