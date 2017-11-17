@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 7577
+  portNum = 7566
   
   type ClientName = String
   type RoomName = String
@@ -160,7 +160,7 @@ module Main where
                   [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",name]] -> do
                         putStrLn "client joined chatroom\n"
                         joinChatRoom client serv arg 
-                        let joinmsg = "CHAT:" ++ show (hash arg) ++"\nCLIENT_NAME:" ++ name ++ "\nMESSAGE: has joined the chatroom.\n" --make sure this get sent to room like a message
+                        let joinmsg = "CHAT:" ++ show (hash arg) ++"\nCLIENT_NAME:" ++ name ++ "\nMESSAGE: " ++ name ++ " has joined the chatroom.\n" --make sure this get sent to room like a message
                         tellRoom (hash arg) (Broadcast joinmsg) --tell/broadcast
                         putStrLn "Room notified. returning True.\n"
                         return True
@@ -217,7 +217,7 @@ module Main where
                                           printf "joining chatroom\n"
                                           client <- createClient name handle (hash name) -- name may not be unique so use hash for client ID
                                           joinChatRoom client server roomName
-                                          let joinmsg = "CHAT:" ++ show (hash roomName) ++"\nCLIENT_NAME:" ++ name ++ "\nMESSAGE: has joined the chatroom.\n"
+                                          let joinmsg = "CHAT:" ++ show (hash roomName) ++"\nCLIENT_NAME:" ++ name ++ "\nMESSAGE: " ++ name ++ " has joined the chatroom.\n"
                                           tellRoom (hash roomName) $ Broadcast joinmsg
                                           runClient server client `finally` (removeClient server client >> return ()) -- run until client removed from chat
                                     _ -> readNxt --if something else then get next message (for case of blank message)
