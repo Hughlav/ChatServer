@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 1778
+  portNum = 5778
   
   type ClientName = String
   type RoomName = String
@@ -314,7 +314,7 @@ module Main where
                   writeTVar (clients a) addClientList
                   send (roomID a) (roomName a)
             where
-                  send ref name = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++name++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID) ) --maybe \n?
+                  send ref name = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++name++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID) ++ "\n" ) 
 
 
   leaveChatroom :: Client -> Server -> Int -> IO()
