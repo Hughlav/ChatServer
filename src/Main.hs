@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 8561
+  portNum = 2561
   
   type ClientName = String
   type RoomName = String
@@ -170,7 +170,7 @@ module Main where
                         return True 
                   [["PORT:",_],["CLIENT_NAME:",name]] -> do
                         --putStrLn "dissconnect\n"
-                        --removeClient serv client
+                        removeClient serv client
                         return False
                   [["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msgToSend),[]] -> do
                         putStrLn "send msg\n"
