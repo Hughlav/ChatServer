@@ -24,4 +24,3 @@ executable Chatserver
                      , async
                      , stm
                      , hashable
-                     , /users/ugrad/laveryhu/Desktop/ChatServer/.stack-work/install/x86_64-linux/lts-9.10/8.0.2/bin
