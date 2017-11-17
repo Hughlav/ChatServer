@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 5558
+  portNum = 5575
   
   type ClientName = String
   type RoomName = String
@@ -160,9 +160,9 @@ module Main where
                   [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",name]] -> do
                         putStrLn "client joined chatroom\n"
                         joinChatRoom client serv arg 
-                        --let joinmsg = "CHAT:" ++(hash arg)++"\nCLIENT_NAME:" ++ name ++ "\n has joined the chatroom.\n" --make sure this get sent to room like a message
-                        --tellRoom (hash arg) (Tell joinmsg) --tell/broadcast
-                        putStrLn "returning True.\n"
+                        let joinmsg = "CHAT:" ++ show (hash arg) ++"\nCLIENT_NAME:" ++ name ++ "\n has joined the chatroom.\n" --make sure this get sent to room like a message
+                        tellRoom (hash arg) (Broadcast joinmsg) --tell/broadcast
+                        putStrLn "Room notified. returning True.\n"
                         return True
                   [["JOIN_ID:",id],["CLIENT_NAME:",name]] -> do
                         putStrLn "leave chatroom\n"
@@ -217,8 +217,17 @@ module Main where
                                           printf "joining chatroom\n"
                                           client <- createClient name handle (hash name) -- name may not be unique so use hash for client ID
                                           joinChatRoom client server roomName
+                                          let joinmsg = "CHAT:" ++ show (hash roomName) ++"\nCLIENT_NAME:" ++ name ++ "\n has joined the chatroom.\n"
+                                          tellRoom (hash roomName) $ Broadcast joinmsg
                                           runClient server client `finally` (removeClient server client >> return ()) -- run until client removed from chat
                                     _ -> readNxt --if something else then get next message (for case of blank message)
+                                    where
+                                          tellRoom roomID msg = do
+                                                roomList <- atomically $readTVar server
+                                                let maybeR = M.lookup roomID roomList
+                                                case maybeR of 
+                                                      Nothing -> putStrLn ("That room does not exist\n" ++ show roomID) >> return True
+                                                      Just a -> sendMsgtoRoom msg a >> return True
                     ["KILL_SERVICE"] -> do 
                         printf "Killing client\n"
                         hPutStrLn handle "see ya" >> return ()
@@ -309,18 +318,13 @@ module Main where
                   let addRoomList = M.insert (roomID room) room roomList
                   writeTVar serverRooms addRoomList --add new chatroom to list of chatrooms
                   send (roomID room) (roomName room)
-                  let joinmsg = "CHAT:" ++(hash arg)++"\nCLIENT_NAME:" ++ name ++ "\n has joined the chatroom.\n"
-                  sendrm room joinmsg
             Just a -> do
                   clientList <- readTVar (clients a)
                   let addClientList = M.insert clientID clientJoining clientList
                   writeTVar (clients a) addClientList
                   send (roomID a) (roomName a)
-                  let joinmsg = "CHAT:" ++(hash arg)++"\nCLIENT_NAME:" ++ name ++ "\n has joined the chatroom.\n"
-                  sendrm a joinmsg
             where
-                  send ref name = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++name++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID) ++ "\n" )
-                  sendrm room msg = sendMsgtoRoom msg room
+                  send ref name = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++name++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID) ++ "\n" ) 
 
 
   leaveChatroom :: Client -> Server -> Int -> IO()
