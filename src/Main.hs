@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 5578
+  portNum = 5558
   
   type ClientName = String
   type RoomName = String
@@ -160,9 +160,9 @@ module Main where
                   [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",name]] -> do
                         putStrLn "client joined chatroom\n"
                         joinChatRoom client serv arg 
-                        let joinmsg = "CHAT:" ++(show (hash arg))++"\nCLIENT_NAME:" ++ clientName ++ "\n has joined the chatroom.\n" --make sure this get sent to room like a message
-                        tellRoom (hash arg) (Tell joinmsg) --tell/broadcast
-                        putStrLn "Room notified. returning True.\n"
+                        --let joinmsg = "CHAT:" ++(hash arg)++"\nCLIENT_NAME:" ++ name ++ "\n has joined the chatroom.\n" --make sure this get sent to room like a message
+                        --tellRoom (hash arg) (Tell joinmsg) --tell/broadcast
+                        putStrLn "returning True.\n"
                         return True
                   [["JOIN_ID:",id],["CLIENT_NAME:",name]] -> do
                         putStrLn "leave chatroom\n"
@@ -235,9 +235,9 @@ module Main where
                               
   runClient :: Server -> Client -> IO()
   runClient serv client@Client{..} = do
-      printf "running client\n"
+      putStrLn "running client\n"
       race server recieve -- concurrently do server and recieve
-      printf "race done\n"
+      putStrLn "race done\n"
       return ()
       where 
             recieve = forever $ do
@@ -276,8 +276,9 @@ module Main where
             server = join $ atomically $ do 
                   msg <- readTChan clientChan
                   return $ do  --- currently a mess, trying to figure out what passes to handleMsg
-                        printf "handeling message\n"
+                        putStrLn "handeling message\n"
                         continue <- handleMsg serv client msg
+                        putStrLn "handeling message returned\n"
                         when continue $ server
 
 
@@ -308,13 +309,18 @@ module Main where
                   let addRoomList = M.insert (roomID room) room roomList
                   writeTVar serverRooms addRoomList --add new chatroom to list of chatrooms
                   send (roomID room) (roomName room)
+                  let joinmsg = "CHAT:" ++(hash arg)++"\nCLIENT_NAME:" ++ name ++ "\n has joined the chatroom.\n"
+                  sendrm room joinmsg
             Just a -> do
                   clientList <- readTVar (clients a)
                   let addClientList = M.insert clientID clientJoining clientList
                   writeTVar (clients a) addClientList
                   send (roomID a) (roomName a)
+                  let joinmsg = "CHAT:" ++(hash arg)++"\nCLIENT_NAME:" ++ name ++ "\n has joined the chatroom.\n"
+                  sendrm a joinmsg
             where
-                  send ref name = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++name++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID) ++ "\n" ) 
+                  send ref name = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++name++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID) ++ "\n" )
+                  sendrm room msg = sendMsgtoRoom msg room
 
 
   leaveChatroom :: Client -> Server -> Int -> IO()
