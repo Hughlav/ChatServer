@@ -6,7 +6,6 @@ module Main where
   import System.IO
   import Control.Exception
   import System.Environment
-  --import Control.Concurrent
   import Control.Monad (forever,replicateM,when,join)
   import Control.Monad.Fix (fix)
   import Control.Applicative
@@ -23,70 +22,12 @@ module Main where
   import qualified Data.Set as S
   import Data.Hashable
 
-
-  
-  {- PORT 4242
-  To join a chat client sends
-        JOIN_CHATROOM: [chatroom name]
-        CLIENT_IP: [IP Address of client if UDP | 0 if TCP]
-        PORT: [port number of client if UDP | 0 if TCP]
-        CLIENT_NAME: [string Handle to identifier client user]
-  
-  Server responds with
-        JOINED_CHATROOM: [chatroom name]
-        SERVER_IP: [IP address of chat room]
-        PORT: [port number of chat room]
-        ROOM_REF: [integer that uniquely identifies chat room on server]
-        JOIN_ID: [integer that uniquely identifies client joining]
-            
-  Server should also let chat room know that "CLIENT_NAME" joint chat room
-  
-  To leave a chatroom client sends 
-        LEAVE_CHATROOM: [ROOM_REF]
-        JOIN_ID: [integer previously provided by server on join]
-        CLIENT_NAME: [string Handle to identifier client user]
-            
-  The server responds with the following message:
-        LEFT_CHATROOM: [ROOM_REF]
-        JOIN_ID: [integer previously provided by server on join]
-  
-  Sever should also let chat room know "CLIENT_NAME" left
-  
-  To terminate connection Client sends:
-        DISCONNECT: [IP address of client if UDP | 0 if TCP]
-        PORT: [port number of client it UDP | 0 id TCP]
-        CLIENT_NAME: [string handle to identify client user]
-            
-  To send a message Client sends:
-        CHAT: [ROOM_REF]
-        JOIN_ID: [integer identifying client to server]
-        CLIENT_NAME: [string identifying client user]
-        MESSAGE: [string terminated with '\n\n']
-            
-  Server sents chat group:
-        CHAT: [ROOM_REF]
-        CLIENT_NAME: [string identifying client user]
-            MESSAGE: [string terminated with '\n\n']
-            
-  Error message 
-        ERROR_CODE: [integer]
-        ERROR_DESCRIPTION: [string describing error]
-  
-  -}
-
-  --portNum :: Int 
-  --portNum = 2161
   
   type ClientName = String
   type RoomName = String
 
   killSERV :: String
   killSERV = "KILL"
-  
---check
-  --type ErrorHeading = String
-  --type ErrorBody = String
-  --type CmdArgs = [[String]]
 
   data Message = Notice String
       | Tell String -- ClientName
@@ -133,7 +74,6 @@ module Main where
   newServer = newTVarIO M.empty
 
 
---do i need ID
   createClient :: ClientName -> Handle -> Int -> IO Client
   createClient name handle nameHash = do
       chan <- newTChanIO
@@ -155,7 +95,7 @@ module Main where
   
   handleMsg :: Server -> Client -> Message -> IO Bool
   handleMsg serv client@Client{..} msg = 
-      case msg of --------------- STUCK IN HANDLEMSG
+      case msg of 
             Notice message -> output message
             Tell message -> output message
             Broadcast message -> output message
@@ -165,21 +105,21 @@ module Main where
                         putStrLn "client joined chatroom\n"
                         joinChatRoom client serv arg 
                         let joinmsg = "CHAT:" ++ show (hash arg) ++"\nCLIENT_NAME:" ++ name ++ "\nMESSAGE: " ++ name ++ " has joined the chatroom.\n" --make sure this get sent to room like a message
-                        tellRoom (hash arg) (Broadcast joinmsg) --tell/broadcast
+                        tellRoom (hash arg) (Broadcast joinmsg) 
                         putStrLn "Room notified. returning True.\n"
                         return True
                   [["JOIN_ID:",id],["CLIENT_NAME:",name]] -> do
                         putStrLn "leave chatroom\n"
-                        leaveChatroom client serv (read arg :: Int) (read id :: Int) --here
+                        leaveChatroom client serv (read arg :: Int) (read id :: Int) 
                         return True 
                   [["PORT:",_],["CLIENT_NAME:",name]] -> do
-                        let leaveMsg = ("CHAT:" ++ show 0 ++ "\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE:" ++ clientName ++" has left the building.\n")
+                        let leaveMsg = ("CHAT:" ++ show 0 ++ "\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE:" ++ clientName ++" has left the building.\n") --NB NB 
                         output leaveMsg -- should be in form CHAT:: send to client
                         removeClient serv client
                         return False
                   [["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msgToSend),[]] -> do
                         putStrLn "send msg\n"
-                        tellRoom (read arg :: Int) $ Tell ("CHAT:" ++ arg ++ "\nCLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n") --one or 2 \n?
+                        tellRoom (read arg :: Int) $ Tell ("CHAT:" ++ arg ++ "\nCLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n") 
                         return True
                   [["KILL"]] -> do
                         putStrLn "KILL\n"
@@ -212,7 +152,6 @@ module Main where
                   case words nxt of 
                     ["HELO", "BASE_TEST"] -> do
                               sendHandle $ "HELO text\nIP: 0\nPort: " ++ (show portNum) ++ "\nStudentID: 14313812\n"
-                              --sendHandle "TEST"
                               printf "Sending: Helo text\nIP: 0\nPort: portNum\nStudentID: 14313812\n"
                               readNxt
                     ["JOIN_CHATROOM:", roomName] -> do
@@ -256,7 +195,7 @@ module Main where
       where 
             recieve = forever $ do
                   putStrLn "in runClient doing case\n"
-                  nxt <- hGetLine clientHandle -- print here
+                  nxt <- hGetLine clientHandle 
                   case words nxt of
                         ["JOIN_CHATROOM:",roomName] -> do
                               putStrLn "running client joining chat\n"
@@ -269,6 +208,7 @@ module Main where
                         ["DISCONNECT:",ip] -> do
                               putStrLn "running client disconnect\n"
                               restOfMsg <- getArgs (2)
+                              --send leave message to client here?
                               sendToRoom restOfMsg ip
                         ["CHAT:",roomID]-> do
                               putStrLn "running client chat\n"
@@ -289,7 +229,7 @@ module Main where
   
             server = join $ atomically $ do 
                   msg <- readTChan clientChan
-                  return $ do  --- currently a mess, trying to figure out what passes to handleMsg
+                  return $ do 
                         putStrLn "handeling message\n"
                         continue <- handleMsg serv client msg
                         putStrLn "handeling message returned\n"
