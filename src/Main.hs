@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 7566
+  portNum = 8564
   
   type ClientName = String
   type RoomName = String
@@ -166,7 +166,7 @@ module Main where
                         return True
                   [["JOIN_ID:",id],["CLIENT_NAME:",name]] -> do
                         putStrLn "leave chatroom\n"
-                        leaveChatroom client serv (hash arg) --read arg / hash
+                        leaveChatroom client serv (read arg :: Int) (read id :: Int) --here
                         return True 
                   [["PORT:",_],["CLIENT_NAME:",name]] -> do
                         putStrLn "dissconnect\n"
@@ -298,7 +298,7 @@ module Main where
       mapM_ (\room -> leave room) rooms
       where
             leave room = do 
-                  leaveChatroom client serv (hash room) >> putStrLn (clientName ++ " removed from " ++ room)
+                  leaveChatroom' client serv (hash room) >> putStrLn (clientName ++ " removed from " ++ room)
 
   newChatroom :: Client -> String -> STM Room
   newChatroom joiningClient@Client{..} room = do
@@ -327,22 +327,27 @@ module Main where
                   send ref name = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++name++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID)) --maybe \n?
 
 
-  leaveChatroom :: Client -> Server -> Int -> IO()
-  leaveChatroom client@Client{..} server roomID = do
+  leaveChatroom' :: Client -> Server -> Int -> IO()
+  leaveChatroom' client@Client{..} server roomID = leaveChatroom client server roomID (roomID+clientID)
+
+  leaveChatroom :: Client -> Server -> Int -> Int -> IO()
+  leaveChatroom client@Client{..} server roomID joinID = do
       rooms <- atomically $ readTVar server
       case M.lookup roomID rooms of 
             Nothing -> putStrLn "There is no room with that name" 
             Just a -> do
+                  atomically $ sendMsg client (Tell $ "LEFT_CHATROOM:" ++ show roomID ++ "\nJOIN_ID:" ++ show joinID) --maybe \n?
                   removeClientfrmRoom 
-                  sendMsgtoRoom leaveMsg a
                   putStrLn $ clientName ++ " left " ++ (roomName a)
                   where
                         removeClientfrmRoom = atomically $ do 
                               clientList <- readTVar (clients a)
+                              let roomClients = M.elems clientList
+                              mapM_ (\a -> sendMsg a leaveMsg) roomClients
                               let newClientList = M.delete (hash clientName) clientList
                               writeTVar (clients a) newClientList
-                              sendMsg client (Tell $ "LEFT_CHATROOM: " ++ (show roomID) ++ "\nJOIN_ID: " ++ (show $ clientID + roomID) ++ "\n")
-                        leaveMsg = Broadcast $ "User Left\n" ++ clientName ++ " has left the building\n\n"
+                              --sendMsg client (Tell $ "LEFT_CHATROOM: " ++ (show roomID) ++ "\nJOIN_ID: " ++ (show $ clientID + roomID) ++ "\n")
+                        leaveMsg = (Broadcast $ "CHAT:\n" ++ show roomID ++ "\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE:" ++ clientName ++" has left the building.\n")
 
   deleteChatroom :: Server -> Int -> IO()
   deleteChatroom serv refID = atomically $ do
