@@ -73,7 +73,7 @@ module Main where
   -}
 
   portNum :: Int 
-  portNum = 5778
+  portNum = 5578
   
   type ClientName = String
   type RoomName = String
@@ -161,12 +161,12 @@ module Main where
                         putStrLn "client joined chatroom\n"
                         joinChatRoom client serv arg 
                         let joinmsg = "CHAT:" ++(show (hash arg))++"\nCLIENT_NAME:" ++ clientName ++ "\n has joined the chatroom.\n" --make sure this get sent to room like a message
-                        tellRoom (read arg :: Int) (Tell joinmsg) --tell/broadcast
+                        tellRoom (hash arg) (Tell joinmsg) --tell/broadcast
                         putStrLn "Room notified. returning True.\n"
                         return True
                   [["JOIN_ID:",id],["CLIENT_NAME:",name]] -> do
                         putStrLn "leave chatroom\n"
-                        leaveChatroom client serv (read arg :: Int)
+                        leaveChatroom client serv (hash arg) --read arg / hash
                         return True 
                   [["PORT:",_],["CLIENT_NAME:",name]] -> do
                         putStrLn "dissconnect\n"
@@ -270,7 +270,7 @@ module Main where
                               
                         where 
                               getArgs n = replicateM n $ hGetLine clientHandle
-                              sendToRoom msg roomID = atomically $ sendMsg client $ Command (map words msg) roomID
+                              sendToRoom msg roomName = atomically $ sendMsg client $ Command (map words msg) roomName
                               sendErrorToRoom  = atomically $ sendMsg client $ Error "Error 1" "No info in message"
   
             server = join $ atomically $ do 
