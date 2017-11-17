@@ -141,7 +141,7 @@ module Main where
                     }
 
   sendMsg :: Client -> Message -> STM ()
-  sendMsg Client{..} msg = writeTChan clientChan msg -- {..} pattern matching so clientChan is easily accesible 
+  sendMsg Client{..} = writeTChan clientChan  -- {..} pattern matching so clientChan is easily accesible 
       
   sendMsgtoRoom :: Message -> Room -> IO ()
   sendMsgtoRoom msg room@Room{..} = atomically $ do 
@@ -160,7 +160,7 @@ module Main where
                   [["CLIENT_IP:",_],["PORT:",_],["CLIENT_NAME:",name]] -> do
                         putStrLn "client joined chatroom\n"
                         joinChatRoom client serv arg 
-                        let joinmsg = "CHAT:" ++(show (hash arg))++"\nCLIENT_NAME:" ++ clientName ++ "\n has joined the chatroom.\n"
+                        let joinmsg = "CHAT:" ++(show (hash arg))++"\nCLIENT_NAME:" ++ clientName ++ "\n has joined the chatroom.\n" --make sure this get sent to room like a message
                         tellRoom (read arg :: Int) (Tell joinmsg) --tell/broadcast
                         putStrLn "Room notified. returning True.\n"
                         return True
@@ -202,9 +202,9 @@ module Main where
       readNxt
       return ()
       where
-            readNxt = do --stck here i think check newlines etc
+            readNxt = do 
                   nxt <- hGetLine handle
-                  case words nxt of --split what is in message nxt into list of words
+                  case words nxt of 
                     ["HELO", "BASE_TEST"] -> do
                               sendHandle $ "HELO text\nIP: 0\nPort: " ++ (show portNum) ++ "\nStudentID: 14313812\n"
                               --sendHandle "TEST"
@@ -237,33 +237,35 @@ module Main where
   runClient serv client@Client{..} = do
       printf "running client\n"
       race server recieve -- concurrently do server and recieve
+      printf "race done\n"
       return ()
       where 
             recieve = forever $ do
-                  nxt <- hGetLine clientHandle
+                  putStrLn "in runClient doing case\n"
+                  nxt <- hGetLine clientHandle -- print here
                   case words nxt of
                         ["JOIN_CHATROOM:",roomName] -> do
-                              printf "running client joining chat\n"
+                              putStrLn "running client joining chat\n"
                               restOfMsg <- getArgs (3)
                               sendToRoom restOfMsg roomName
                         ["LEAVE_CHATROOM:",roomID] -> do
-                              printf "running client leaving chat\n"
+                              putStrLn "running client leaving chat\n"
                               restOfMsg <- getArgs (2)
                               sendToRoom restOfMsg roomID
                         ["DISCONNECT:",ip] -> do
-                              printf "running client disconnect\n"
+                              putStrLn "running client disconnect\n"
                               restOfMsg <- getArgs (2)
                               sendToRoom restOfMsg ip
                         ["CHAT:",roomID]-> do
-                              printf "running client chat\n"
+                              putStrLn "running client chat\n"
                               restOfMsg <- getArgs (4)
                               sendToRoom restOfMsg roomID
                         ["KILL_SERVICE"] -> do
-                              printf "running client kill service\n"
+                              putStrLn "running client kill service\n"
                               sendToRoom [killSERV] killSERV
                               return()
                         _ -> do
-                              printf "error run client\n"
+                              putStrLn "error run client\n"
                               sendErrorToRoom 
                               
                         where 
@@ -298,21 +300,21 @@ module Main where
 
 
   joinChatRoom ::  Client -> Server -> String -> IO()
-  joinChatRoom clientJoining@Client{..} serverRooms roomName = atomically $ do
+  joinChatRoom clientJoining@Client{..} serverRooms rName = atomically $ do
       roomList <- readTVar serverRooms
-      case M.lookup (hash roomName) roomList of --check if that chatroom exists
+      case M.lookup (hash rName) roomList of --check if that chatroom exists
             Nothing -> do
-                  room <- newChatroom clientJoining roomName
+                  room <- newChatroom clientJoining rName
                   let addRoomList = M.insert (roomID room) room roomList
                   writeTVar serverRooms addRoomList --add new chatroom to list of chatrooms
-                  send (roomID room)
+                  send (roomID room) (roomName room)
             Just a -> do
                   clientList <- readTVar (clients a)
                   let addClientList = M.insert clientID clientJoining clientList
                   writeTVar (clients a) addClientList
-                  send (roomID a)
+                  send (roomID a) (roomName a)
             where
-                  send ref = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++roomName++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID) ++ "\n") --no port as udp
+                  send ref name = sendMsg clientJoining (Tell $ "JOINED_CHATROOM: "++name++"\nSERVER_IP: 0.0.0.0\nPORT: 0\nROOM_REF: " ++ show ref ++"\nJOIN_ID: " ++ show (ref+clientID) ) --maybe \n?
 
 
   leaveChatroom :: Client -> Server -> Int -> IO()
