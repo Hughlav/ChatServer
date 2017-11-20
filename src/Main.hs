@@ -113,8 +113,10 @@ module Main where
                         leaveChatroom client serv (read arg :: Int) (read id :: Int) 
                         return True 
                   [["PORT:",_],["CLIENT_NAME:",name]] -> do
-                        let leaveMsg = ("CHAT:" ++ show 0 ++ "\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE:" ++ clientName ++" has left the building.\n") --NB NB 
-                        output leaveMsg -- should be in form CHAT:: send to client
+                        --let leaveMsg = ("CHAT:" ++ show 0 ++ "\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE:" ++ clientName ++" has left the building.\n") --NB NB 
+                        --output leaveMsg -- should be in form CHAT:: send to client
+                        let leavemsg = "CHAT:" ++ show (hash arg) ++"\nCLIENT_NAME:" ++ name ++ "\nMESSAGE: " ++ name ++ " has left the chatroom.\n"
+                        tellRoom arg (Broadcast leavemsg) 
                         removeClient serv client
                         return False
                   [["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msgToSend),[]] -> do
@@ -240,8 +242,13 @@ module Main where
   removeClient serv client@Client{..} = do 
       roomsRemove <- atomically $ readTVar serv
       let rooms = Prelude.map (\room -> roomName room)(M.elems roomsRemove)
-      mapM_ (\room -> leave room) rooms
+      let roomType = M.elems roomsRemove
+      --mapM_ (\roomT -> send roomT) roomType
+      mapM_ (\room -> leave room ) rooms 
       where
+            --send roomT = do
+            --      let leaveMsg = Broadcast ("CHAT:" ++ (show (hash roomName)) ++ "\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE:" ++ clientName ++" has left the building.\n")
+            --      sendMsgtoRoom leaveMsg roomT
             leave room = do 
                   leaveChatroom' client serv (hash room) >> putStrLn (clientName ++ " removed from " ++ room)
 
