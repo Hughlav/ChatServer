@@ -116,7 +116,7 @@ module Main where
                         --let leaveMsg = ("CHAT:" ++ show 0 ++ "\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE:" ++ clientName ++" has left the building.\n") --NB NB 
                         --output leaveMsg -- should be in form CHAT:: send to client
                         let leavemsg = "CHAT:" ++ show (hash arg) ++"\nCLIENT_NAME:" ++ name ++ "\nMESSAGE: " ++ name ++ " has left the chatroom.\n"
-                        tellRoom (hash arg) (Broadcast leavemsg) 
+                        tellRoom (read arg :: Int) (Broadcast leavemsg) 
                         removeClient serv client
                         return False
                   [["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msgToSend),[]] -> do
@@ -193,6 +193,8 @@ module Main where
       putStrLn "running client\n"
       race server recieve -- concurrently do server and recieve
       putStrLn "race done\n"
+      let leavemsg = "CHAT:" ++ show ("0") ++"\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE: " ++ clientName ++ " has left the chatroomFINALLY.\n"
+      hPutStrLn clientHandle leavemsg
       return ()
       where 
             recieve = forever $ do
