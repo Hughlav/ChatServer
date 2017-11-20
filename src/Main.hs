@@ -43,6 +43,7 @@ module Main where
       , clientChan :: TChan Message
       , clientHandle :: Handle 
       , clientID :: Int
+      , clientORoom :: Int
   }
   
   data Room = Room
@@ -82,6 +83,7 @@ module Main where
                     , clientChan = chan
                     , clientHandle = handle
                     , clientID = nameHash
+                    , clientORoom = 0
                     }
 
   sendMsg :: Client -> Message -> STM ()
@@ -115,8 +117,8 @@ module Main where
                   [["PORT:",_],["CLIENT_NAME:",name]] -> do
                         --let leaveMsg = ("CHAT:" ++ show 0 ++ "\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE:" ++ clientName ++" has left the building.\n") --NB NB 
                         --output leaveMsg -- should be in form CHAT:: send to client
-                        let leavemsg = "CHAT:" ++ show (hash arg) ++"\nCLIENT_NAME:" ++ name ++ "\nMESSAGE: " ++ name ++ " has left the chatroom.\n"
-                        tellRoom (read arg :: Int) (Broadcast leavemsg) 
+                        let leavemsg = "CHAT:" ++ show (hash ("room1" :: String)) ++"\nCLIENT_NAME:" ++ name ++ "\nMESSAGE: " ++ name ++ " has left the chatroom.\n"
+                        tellRoom (read arg :: Int) (Tell leavemsg) 
                         removeClient serv client
                         return False
                   [["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msgToSend),[]] -> do
@@ -165,7 +167,9 @@ module Main where
                                           joinChatRoom client server roomName
                                           let joinmsg = "CHAT:" ++ show (hash roomName) ++"\nCLIENT_NAME:" ++ name ++ "\nMESSAGE: " ++ name ++ " has joined the chatroom.\n"
                                           tellRoom (hash roomName) $ Broadcast joinmsg
-                                          runClient server client `finally` (removeClient server client >> return ()) -- run until client removed from chat
+                                          let leavemsg = "CHAT:" ++ show (hash roomName) ++"\nCLIENT_NAME:" ++ name ++ "\nMESSAGE: " ++ name ++ " has left the chatroom once and for all.\n"
+                                          putStrLn "here OAFA"
+                                          runClient server client `finally` (tellRoom (hash roomName) (Broadcast leavemsg) >>  removeClient server client >> return ()) -- run until client removed from chat
                                     _ -> readNxt --if something else then get next message (for case of blank message)
                                     where
                                           tellRoom roomID msg = do
