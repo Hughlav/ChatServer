@@ -116,7 +116,7 @@ module Main where
                         --let leaveMsg = ("CHAT:" ++ show 0 ++ "\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE:" ++ clientName ++" has left the building.\n") --NB NB 
                         --output leaveMsg -- should be in form CHAT:: send to client
                         let leavemsg = "CHAT:" ++ show (hash arg) ++"\nCLIENT_NAME:" ++ name ++ "\nMESSAGE: " ++ name ++ " has left the chatroom.\n"
-                        tellRoom arg (Broadcast leavemsg) 
+                        tellRoom (hash arg) (Broadcast leavemsg) 
                         removeClient serv client
                         return False
                   [["JOIN_ID:",id],["CLIENT_NAME:",name],("MESSAGE:":msgToSend),[]] -> do
