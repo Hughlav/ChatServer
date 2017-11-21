@@ -169,7 +169,7 @@ module Main where
                                           tellRoom (hash roomName) $ Broadcast joinmsg
                                           let leavemsg = "CHAT:" ++ show (hash roomName) ++"\nCLIENT_NAME:" ++ name ++ "\nMESSAGE: " ++ name ++ " has left the chatroom once and for all.\n"
                                           putStrLn "here OAFA"
-                                          runClient server client `finally` (tellRoom (hash roomName) (Broadcast leavemsg) >>  removeClient server client >> return ()) -- run until client removed from chat
+                                          runClient server client `finally` (tellRoom' (hash roomName) (Broadcast leavemsg) >>  removeClient server client >> return ()) -- run until client removed from chat
                                     _ -> readNxt --if something else then get next message (for case of blank message)
                                     where
                                           tellRoom roomID msg = do
@@ -178,6 +178,13 @@ module Main where
                                                 case maybeR of 
                                                       Nothing -> putStrLn ("That room does not exist\n" ++ show roomID) >> return True
                                                       Just a -> sendMsgtoRoom msg a >> return True
+                                          tellRoom' roomID msg = do
+                                                roomList <- atomically $readTVar server
+                                                let rKeys = M.keys roomList
+                                                putStrLn (show rKeys)
+                                                --case rKeys of 
+                                                      --Nothing -> putStrLn ("That room does not exist\n" ++ show roomID) >> return True
+                                                      --Just a -> sendMsgtoRoom msg a >> return True --Find client room one and send msg to that room
                     ["KILL_SERVICE"] -> do 
                         printf "Killing client\n"
                         hPutStrLn handle "see ya" >> return ()
