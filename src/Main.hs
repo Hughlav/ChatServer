@@ -2,7 +2,7 @@
 {-# LANGUAGE LambdaCase,RecordWildCards, OverloadedStrings #-} 
 module Main where
   
-  
+  import System.Exit
   import System.IO
   import Control.Exception
   import System.Environment
@@ -27,7 +27,7 @@ module Main where
   type RoomName = String
 
   killSERV :: String
-  killSERV = "KILL"
+  killSERV = "KILL_SERVICE"
 
   data Message = Notice String
       | Tell String -- ClientName
@@ -43,7 +43,6 @@ module Main where
       , clientChan :: TChan Message
       , clientHandle :: Handle 
       , clientID :: Int
-      , clientORoom :: Int
   }
   
   data Room = Room
@@ -83,7 +82,6 @@ module Main where
                     , clientChan = chan
                     , clientHandle = handle
                     , clientID = nameHash
-                    , clientORoom = 0
                     }
 
   sendMsg :: Client -> Message -> STM ()
@@ -125,7 +123,7 @@ module Main where
                         putStrLn "send msg\n"
                         tellRoom (read arg :: Int) $ Tell ("CHAT:" ++ arg ++ "\nCLIENT_NAME: " ++ name ++ "\nMESSAGE: "++(unwords msgToSend)++"\n") 
                         return True
-                  [["KILL"]] -> do
+                  [["KILL_SERVICE"]] -> do
                         putStrLn "KILL\n"
                         if arg == killSERV then return False
                         else return True
@@ -182,12 +180,14 @@ module Main where
                                                 roomList <- atomically $readTVar server
                                                 let rKeys = M.keys roomList
                                                 putStrLn (show rKeys)
-                                                --case rKeys of 
-                                                      --Nothing -> putStrLn ("That room does not exist\n" ++ show roomID) >> return True
-                                                      --Just a -> sendMsgtoRoom msg a >> return True --Find client room one and send msg to that room
+                                                let key = rKeys!!1
+                                                let maybeK = M.lookup key roomList
+                                                case maybeK of 
+                                                      Nothing -> putStrLn ("That room does not exist\n" ++ show roomID) >> return True
+                                                      Just a -> sendMsgtoRoom msg a >> return True --Find client room one and send msg to that room
                     ["KILL_SERVICE"] -> do 
                         printf "Killing client\n"
-                        hPutStrLn handle "see ya" >> return ()
+                        hPutStrLn handle "see ya" >> exitSuccess--return
 
                     _ -> do
                         putStrLn $ "words are: " ++ show nxt ++ "\n"
@@ -204,8 +204,9 @@ module Main where
       putStrLn "running client\n"
       race server recieve -- concurrently do server and recieve
       putStrLn "race done\n"
-      let leavemsg = "CHAT:" ++ show ("0") ++"\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE: " ++ clientName ++ " has left the chatroomFINALLY.\n"
-      hPutStrLn clientHandle leavemsg
+      --let leavemsg = "CHAT:" ++ show ("tesstin") ++"\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE: " ++ clientName ++ " has left the chatroomFINALLY.\n"
+      tellRoom' 
+      --hPutStrLn clientHandle leavemsg
       return ()
       where 
             recieve = forever $ do
@@ -249,7 +250,18 @@ module Main where
                         continue <- handleMsg serv client msg
                         putStrLn "handeling message returned\n"
                         when continue $ server
-
+            tellRoom' = do
+                  roomList <- atomically $readTVar serv
+                  let rKeys = M.keys roomList
+                  putStrLn (show rKeys)
+                  let key = rKeys!!1
+                  let maybeK  = M.lookup key roomList
+                  case maybeK of 
+                        Nothing -> putStrLn ("That room does not exist!!!\n") >> return True
+                        Just a -> do
+                             let leavemsg = "CHAT:" ++ show (hash (roomName a)) ++"\nCLIENT_NAME:" ++ clientName ++ "\nMESSAGE: " ++ clientName ++ " has left the chatroomFINALLY.\n"
+                             --sendMsgtoRoom (Tell leavemsg) a >> return True 
+                             hPutStrLn clientHandle leavemsg >> return True
 
   removeClient :: Server -> Client -> IO() 
   removeClient serv client@Client{..} = do 
